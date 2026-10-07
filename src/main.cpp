@@ -19,17 +19,29 @@ void setup()
 
 void loop()
 {
-    Serial.println("LED ON");
+    static const struct
+    {
+        const char *name;
+        uint32_t color;
+    } colors[] = {
+        {"GREEN", Adafruit_NeoPixel::Color(0, 255, 0)},
+        {"RED", Adafruit_NeoPixel::Color(255, 0, 0)},
+        {"BLUE", Adafruit_NeoPixel::Color(0, 0, 255)},
+    };
+    static size_t index = 0;
 
-    led.setPixelColor(0, led.Color(255, 0, 0)); // Red
+    // 1 second period, 50% duty cycle: 500 ms on, 500 ms off
+    Serial.printf("LED %s\n", colors[index].name);
+
+    led.setPixelColor(0, colors[index].color);
     led.show();
 
     delay(500);
-
-    Serial.println("LED OFF");
 
     led.clear();
     led.show();
 
     delay(500);
+
+    index = (index + 1) % (sizeof(colors) / sizeof(colors[0]));
 }
