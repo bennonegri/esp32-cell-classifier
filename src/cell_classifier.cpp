@@ -6,28 +6,32 @@
 
 namespace
 {
-// Typical resting values for healthy cells. OCV spreads cover the usable state
-// of charge; IR values are DC resistance at ~1 s and vary a lot by brand and age.
+// Typical resting values for healthy cells. OCV spreads cover the usable
+// state of charge. IR is DC resistance at ~1 s; it varies a lot by brand
+// and age, so it has a wide spread.
 const CellProfile kProfiles[] = {
-    // name,           OCV typ, OCV sigma, IR typ, IR spread, colour
-    {"AA Alkaline",    1.50f,   0.12f,     0.150f, 2.0f,      {255, 220, 120}},  // butter yellow
-    {"AA NiMH",        1.32f,   0.08f,     0.040f, 2.0f,      {140, 240, 170}},  // mint
-    {"14500 Li-ion",   3.80f,   0.25f,     0.150f, 2.0f,      {130, 180, 255}},  // baby blue
-    {"14500 LiFePO4",  3.28f,   0.08f,     0.080f, 2.0f,      {200, 150, 255}},  // lavender
+    // name           OCV    sigma  IR      k     colour
+    {"AA Alkaline",   1.50f, 0.12f, 0.150f, 2.0f, {255, 220, 120}},  // yellow
+    {"AA NiMH",       1.32f, 0.08f, 0.040f, 2.0f, {140, 240, 170}},  // mint
+    {"14500 Li-ion",  3.80f, 0.25f, 0.150f, 2.0f, {130, 180, 255}},  // blue
+    {"14500 LiFePO4", 3.28f, 0.08f, 0.080f, 2.0f, {200, 150, 255}},  // lilac
 };
 
-// Floor for the log-scale IR comparison; measurement noise can give ~0 or negative IR.
+// Floor for the log IR term; noise can give ~0 or negative IR.
 constexpr float kMinIrOhm = 0.005f;
 
+// Squared normalised distance of a reading from a profile.
 float matchScore(const CellProfile &profile, float ocvVolts, float irOhm)
 {
-    const float ocvZ = (ocvVolts - profile.ocvTypicalVolts) / profile.ocvSigmaVolts;
+    const float ocvZ =
+        (ocvVolts - profile.ocvTypicalVolts) / profile.ocvSigmaVolts;
     float score = ocvZ * ocvZ;
 
     if (!isnan(irOhm))
     {
-        const float irZ = logf(fmaxf(irOhm, kMinIrOhm) / profile.irTypicalOhm) /
-                          logf(profile.irSpreadFactor);
+        const float irZ =
+            logf(fmaxf(irOhm, kMinIrOhm) / profile.irTypicalOhm) /
+            logf(profile.irSpreadFactor);
         score += config::IR_WEIGHT * irZ * irZ;
     }
     return score;
@@ -46,6 +50,7 @@ Classification classifyCell(float ocvVolts, float irOhm)
         }
     }
 
+    // Keep the score for logging, but report no match if it's too far off.
     if (best.score > config::MAX_MATCH_SCORE)
     {
         best.profile = nullptr;

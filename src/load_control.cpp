@@ -11,6 +11,7 @@ namespace
 {
 constexpr uint32_t kMaxDuty = (1u << config::LOAD_PWM_RESOLUTION_BITS) - 1;
 
+// The LEDC API is addressed by channel in arduino-esp32 2.x, by pin in 3.x.
 void writeDuty(uint32_t duty)
 {
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
@@ -23,15 +24,17 @@ void writeDuty(uint32_t duty)
 
 void begin()
 {
-    // Drive the pin low before the PWM peripheral takes it over.
+    // Hold the pin low until the PWM takes over so the load stays off.
     pinMode(config::LOAD_PWM_PIN, OUTPUT);
     digitalWrite(config::LOAD_PWM_PIN, LOW);
 
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcAttachChannel(config::LOAD_PWM_PIN, config::LOAD_PWM_FREQ_HZ,
-                      config::LOAD_PWM_RESOLUTION_BITS, config::LOAD_PWM_CHANNEL);
+                      config::LOAD_PWM_RESOLUTION_BITS,
+                      config::LOAD_PWM_CHANNEL);
 #else
-    ledcSetup(config::LOAD_PWM_CHANNEL, config::LOAD_PWM_FREQ_HZ, config::LOAD_PWM_RESOLUTION_BITS);
+    ledcSetup(config::LOAD_PWM_CHANNEL, config::LOAD_PWM_FREQ_HZ,
+              config::LOAD_PWM_RESOLUTION_BITS);
     ledcAttachPin(config::LOAD_PWM_PIN, config::LOAD_PWM_CHANNEL);
 #endif
 
@@ -40,6 +43,7 @@ void begin()
 
 void setVoltage(float volts)
 {
+    // Filtered PWM voltage = duty fraction * GPIO high level.
     volts = constrain(volts, 0.0f, config::GPIO_HIGH_VOLTAGE_V);
     writeDuty(lroundf(volts / config::GPIO_HIGH_VOLTAGE_V * kMaxDuty));
 }

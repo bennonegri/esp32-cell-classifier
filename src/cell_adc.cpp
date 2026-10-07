@@ -8,9 +8,13 @@ namespace cell_adc
 {
 namespace
 {
+// Cell voltage = ADC pin voltage * (R_TOP + R_BOTTOM) / R_BOTTOM.
 constexpr float kDividerGain =
-    (config::DIVIDER_R_TOP_OHM + config::DIVIDER_R_BOTTOM_OHM) / config::DIVIDER_R_BOTTOM_OHM;
+    (config::DIVIDER_R_TOP_OHM + config::DIVIDER_R_BOTTOM_OHM) /
+    config::DIVIDER_R_BOTTOM_OHM;
 
+// Mean pin voltage in volts. analogReadMilliVolts applies the factory
+// eFuse calibration, so no manual offset/gain correction is needed.
 float averageVolts(uint8_t pin)
 {
     uint32_t sumMilliVolts = 0;
@@ -24,6 +28,7 @@ float averageVolts(uint8_t pin)
 
 void begin()
 {
+    // 11 dB attenuation gives the widest input range (~0-2.5 V calibrated).
     analogReadResolution(12);
     analogSetPinAttenuation(config::CELL_ADC_PIN, ADC_11db);
     if (config::LOAD_SENSE_ADC_PIN >= 0)

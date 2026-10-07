@@ -8,8 +8,9 @@ namespace status_led
 {
 namespace
 {
+// Single WS2812 on the dev board; it expects GRB byte order.
 Adafruit_NeoPixel led(1, config::LED_PIN, NEO_GRB + NEO_KHZ800);
-}
+}  // namespace
 
 void begin()
 {

@@ -11,13 +11,14 @@ CellTestResult runCellTest()
 {
     CellTestResult result{};
 
-    // 1. Load off (0 V at the non-inverting input) and measure OCV.
+    // 1. OCV: 0 V on the op-amp (+) input, so the MOSFET is off.
     status_led::show(status_led::OCV_COLOR);
     load::off();
     delay(config::LOAD_OFF_SETTLE_MS);
     result.ocvVolts = cell_adc::readCellVolts();
 
-    // 2. Hold LOAD_SET_VOLTAGE_V across RL and measure the terminal voltage.
+    // 2. Load step: hold LOAD_SET_VOLTAGE_V across RL for LOAD_TIME_MS,
+    //    then read the terminal voltage and turn the load straight off.
     status_led::show(status_led::DISCHARGE_COLOR);
     load::setVoltage(config::LOAD_SET_VOLTAGE_V);
     delay(config::LOAD_TIME_MS);
@@ -25,13 +26,16 @@ CellTestResult runCellTest()
     const float senseVolts = cell_adc::readLoadSenseVolts();
     load::off();
 
-    const float rlVolts = isnan(senseVolts) ? config::LOAD_SET_VOLTAGE_V : senseVolts;
+    // Use the measured RL voltage if a sense pin is fitted.
+    const float rlVolts =
+        isnan(senseVolts) ? config::LOAD_SET_VOLTAGE_V : senseVolts;
     result.loadCurrentAmps = rlVolts / config::LOAD_RESISTOR_OHM;
 
-    // 3. Back-calculate internal resistance. If the cell sagged too close to the
-    // RL voltage the MOSFET can't regulate, so the assumed current is wrong.
+    // 3. IR = (OCV - V_loaded) / I. Only valid if the cell stayed far enough
+    //    above the RL voltage for the MOSFET to hold the set current.
     const bool currentRegulated =
-        result.loadedVolts >= config::LOAD_SET_VOLTAGE_V + config::MIN_LOAD_HEADROOM_V;
+        result.loadedVolts >=
+        config::LOAD_SET_VOLTAGE_V + config::MIN_LOAD_HEADROOM_V;
     if (currentRegulated && result.loadCurrentAmps > 0.0f)
     {
         result.internalResistanceOhm =
