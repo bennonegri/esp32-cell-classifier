@@ -34,8 +34,6 @@ float matchScore(const CellProfile &profile, float ocvVolts, float irOhm)
 }
 }  // namespace
 
-const Rgb kUnknownCellColor = {255, 140, 140};  // coral
-
 Classification classifyCell(float ocvVolts, float irOhm)
 {
     Classification best = {nullptr, INFINITY};

@@ -20,5 +20,3 @@ struct Classification
 
 // Pass NAN for irOhm to classify on OCV alone.
 Classification classifyCell(float ocvVolts, float irOhm);
-
-extern const Rgb kUnknownCellColor;

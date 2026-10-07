@@ -9,8 +9,6 @@
 
 namespace
 {
-const Rgb kTestingColor = {60, 60, 60};  // dim white while measuring
-
 bool cellPresent()
 {
     return cell_adc::readCellVolts() > config::CELL_PRESENT_THRESHOLD_V;
@@ -51,9 +49,9 @@ void loop()
         return;
     }
 
+    Serial.println("Cell detected, settling...");
+    status_led::show(status_led::OCV_COLOR);
     delay(config::CELL_INSERT_SETTLE_MS);
-    Serial.println("Cell detected, testing...");
-    status_led::show(kTestingColor);
 
     const CellTestResult test = runCellTest();
     if (test.ocvVolts <= config::CELL_PRESENT_THRESHOLD_V)
@@ -66,7 +64,7 @@ void loop()
     const Classification match = classifyCell(test.ocvVolts, test.internalResistanceOhm);
     printResult(test, match);
 
-    status_led::show(match.profile ? match.profile->color : kUnknownCellColor);
+    status_led::show(match.profile ? match.profile->color : status_led::UNKNOWN_COLOR);
     delay(config::RESULT_DISPLAY_MS);
     status_led::off();
 

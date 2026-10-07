@@ -29,7 +29,7 @@ constexpr uint8_t LOAD_PWM_RESOLUTION_BITS = 10;
 constexpr uint8_t LOAD_PWM_CHANNEL = 0;        // LEDC channel
 
 // ---- Measurement timing ----
-constexpr uint32_t CELL_INSERT_SETTLE_MS = 500;  // let the holder contacts settle after insertion
+constexpr uint32_t CELL_INSERT_SETTLE_MS = 5000;  // let the contacts and cell settle before OCV
 constexpr uint32_t LOAD_OFF_SETTLE_MS = 100;     // RC filter (tau = 4.7 ms) and op-amp settle before OCV
 constexpr uint32_t LOAD_TIME_MS = 1000;          // load applied before reading the terminal voltage
 constexpr uint16_t ADC_SAMPLES = 64;             // samples averaged per voltage reading

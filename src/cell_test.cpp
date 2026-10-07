@@ -5,17 +5,20 @@
 #include "cell_adc.h"
 #include "config.h"
 #include "load_control.h"
+#include "status_led.h"
 
 CellTestResult runCellTest()
 {
     CellTestResult result{};
 
     // 1. Load off (0 V at the non-inverting input) and measure OCV.
+    status_led::show(status_led::OCV_COLOR);
     load::off();
     delay(config::LOAD_OFF_SETTLE_MS);
     result.ocvVolts = cell_adc::readCellVolts();
 
     // 2. Hold LOAD_SET_VOLTAGE_V across RL and measure the terminal voltage.
+    status_led::show(status_led::DISCHARGE_COLOR);
     load::setVoltage(config::LOAD_SET_VOLTAGE_V);
     delay(config::LOAD_TIME_MS);
     result.loadedVolts = cell_adc::readCellVolts();
