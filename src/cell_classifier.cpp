@@ -1,0 +1,56 @@
+#include "cell_classifier.h"
+
+#include <math.h>
+
+#include "config.h"
+
+namespace
+{
+// Typical resting values for healthy cells. OCV spreads cover the usable state
+// of charge; IR values are DC resistance at ~1 s and vary a lot by brand and age.
+const CellProfile kProfiles[] = {
+    // name,           OCV typ, OCV sigma, IR typ, IR spread, colour
+    {"AA Alkaline",    1.50f,   0.12f,     0.150f, 2.0f,      {255, 220, 120}},  // butter yellow
+    {"AA NiMH",        1.32f,   0.08f,     0.040f, 2.0f,      {140, 240, 170}},  // mint
+    {"14500 Li-ion",   3.80f,   0.25f,     0.150f, 2.0f,      {130, 180, 255}},  // baby blue
+    {"14500 LiFePO4",  3.28f,   0.08f,     0.080f, 2.0f,      {200, 150, 255}},  // lavender
+};
+
+// Floor for the log-scale IR comparison; measurement noise can give ~0 or negative IR.
+constexpr float kMinIrOhm = 0.005f;
+
+float matchScore(const CellProfile &profile, float ocvVolts, float irOhm)
+{
+    const float ocvZ = (ocvVolts - profile.ocvTypicalVolts) / profile.ocvSigmaVolts;
+    float score = ocvZ * ocvZ;
+
+    if (!isnan(irOhm))
+    {
+        const float irZ = logf(fmaxf(irOhm, kMinIrOhm) / profile.irTypicalOhm) /
+                          logf(profile.irSpreadFactor);
+        score += config::IR_WEIGHT * irZ * irZ;
+    }
+    return score;
+}
+}  // namespace
+
+const Rgb kUnknownCellColor = {255, 140, 140};  // coral
+
+Classification classifyCell(float ocvVolts, float irOhm)
+{
+    Classification best = {nullptr, INFINITY};
+    for (const CellProfile &profile : kProfiles)
+    {
+        const float score = matchScore(profile, ocvVolts, irOhm);
+        if (score < best.score)
+        {
+            best = {&profile, score};
+        }
+    }
+
+    if (best.score > config::MAX_MATCH_SCORE)
+    {
+        best.profile = nullptr;
+    }
+    return best;
+}

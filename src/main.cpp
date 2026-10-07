@@ -1,47 +1,78 @@
 #include <Arduino.h>
-#include <Adafruit_NeoPixel.h>
 
-#define LED_PIN 8
-#define NUM_LEDS 1
+#include "cell_adc.h"
+#include "cell_classifier.h"
+#include "cell_test.h"
+#include "config.h"
+#include "load_control.h"
+#include "status_led.h"
 
-Adafruit_NeoPixel led(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
+namespace
+{
+const Rgb kTestingColor = {60, 60, 60};  // dim white while measuring
+
+bool cellPresent()
+{
+    return cell_adc::readCellVolts() > config::CELL_PRESENT_THRESHOLD_V;
+}
+
+void printResult(const CellTestResult &test, const Classification &match)
+{
+    Serial.printf("OCV:      %.3f V\n", test.ocvVolts);
+    Serial.printf("Loaded:   %.3f V @ %.1f mA\n", test.loadedVolts, test.loadCurrentAmps * 1000.0f);
+    if (isnan(test.internalResistanceOhm))
+    {
+        Serial.println("IR:       n/a (load current not regulated, classifying on OCV only)");
+    }
+    else
+    {
+        Serial.printf("IR:       %.1f mOhm\n", test.internalResistanceOhm * 1000.0f);
+    }
+    Serial.printf("Result:   %s (score %.2f)\n",
+                  match.profile ? match.profile->name : "Unknown", match.score);
+}
+}  // namespace
 
 void setup()
 {
+    load::begin();  // first, so the load is held off from boot
     Serial.begin(115200);
+    cell_adc::begin();
+    status_led::begin();
 
-    led.begin();
-    led.clear();
-    led.show();
-
-    Serial.println("Program started");
+    Serial.println("Cell classifier ready - insert a cell");
 }
 
 void loop()
 {
-    static const struct
+    if (!cellPresent())
     {
-        const char *name;
-        uint32_t color;
-    } colors[] = {
-        {"GREEN", Adafruit_NeoPixel::Color(0, 255, 0)},
-        {"RED", Adafruit_NeoPixel::Color(255, 0, 0)},
-        {"BLUE", Adafruit_NeoPixel::Color(0, 0, 255)},
-    };
-    static size_t index = 0;
+        delay(200);
+        return;
+    }
 
-    // 1 second period, 50% duty cycle: 500 ms on, 500 ms off
-    Serial.printf("LED %s\n", colors[index].name);
+    delay(config::CELL_INSERT_SETTLE_MS);
+    Serial.println("Cell detected, testing...");
+    status_led::show(kTestingColor);
 
-    led.setPixelColor(0, colors[index].color);
-    led.show();
+    const CellTestResult test = runCellTest();
+    if (test.ocvVolts <= config::CELL_PRESENT_THRESHOLD_V)
+    {
+        Serial.println("Cell removed during test");
+        status_led::off();
+        return;
+    }
 
-    delay(500);
+    const Classification match = classifyCell(test.ocvVolts, test.internalResistanceOhm);
+    printResult(test, match);
 
-    led.clear();
-    led.show();
+    status_led::show(match.profile ? match.profile->color : kUnknownCellColor);
+    delay(config::RESULT_DISPLAY_MS);
+    status_led::off();
 
-    delay(500);
-
-    index = (index + 1) % (sizeof(colors) / sizeof(colors[0]));
+    Serial.println("Remove the cell to test another");
+    while (cellPresent())
+    {
+        delay(200);
+    }
 }
