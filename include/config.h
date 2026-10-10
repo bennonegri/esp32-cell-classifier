@@ -33,6 +33,10 @@ constexpr uint8_t CELL_ADC_PIN = 3;   // GPIO_3: Vcell (ADC1 channel 3)
 constexpr float DIVIDER_R_TOP_OHM = 27000.0f;
 constexpr float DIVIDER_R_BOTTOM_OHM = 39000.0f;
 
+// Vcell calibration: true / reported. From a DMM check at 2.9-3.3 V the
+// firmware read 0.53% high, consistent with 1% divider resistor tolerance.
+constexpr float CELL_CAL_GAIN = 0.9947f;
+
 // ---- Electronic load ----
 // The op-amp drives the MOSFET to hold the set voltage across RL, so the
 // load current is LOAD_SET_VOLTAGE_V / LOAD_RESISTOR_OHM (0.5/10 = 50 mA).

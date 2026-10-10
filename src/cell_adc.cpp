@@ -8,8 +8,10 @@ namespace cell_adc
 {
 namespace
 {
-// Cell voltage = ADC pin voltage * (R_TOP + R_BOTTOM) / R_BOTTOM.
+// Cell voltage = ADC pin voltage * (R_TOP + R_BOTTOM) / R_BOTTOM,
+// trimmed by the measured calibration factor.
 constexpr float kDividerGain =
+    config::CELL_CAL_GAIN *
     (config::DIVIDER_R_TOP_OHM + config::DIVIDER_R_BOTTOM_OHM) /
     config::DIVIDER_R_BOTTOM_OHM;
 
