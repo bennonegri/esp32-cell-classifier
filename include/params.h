@@ -24,6 +24,11 @@ constexpr uint8_t VBAT_PIN = 3;  // GPIO_3
 constexpr float LOAD_RESISTOR_OHM = 10.0f;   // RL
 constexpr float DIVIDER_R_TOP_OHM = 27000.0f;
 constexpr float DIVIDER_R_BOTTOM_OHM = 39000.0f;
+
+// Vbat calibration: true / reported. From a DMM check at 2.9-3.3 V the
+// firmware read 0.53% high, consistent with 1% divider resistor tolerance.
+constexpr float VBAT_CAL_GAIN = 0.9947f;
+
 constexpr float GPIO_HIGH_V = 3.3f;  // PWM high level; measure on the board
 
 // ---- PWM ----

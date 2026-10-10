@@ -54,7 +54,7 @@ float readLoadAmps()
 
 float readBatteryVolts()
 {
-    return readPinVolts(VBAT_PIN) *
+    return readPinVolts(VBAT_PIN) * VBAT_CAL_GAIN *
            (DIVIDER_R_TOP_OHM + DIVIDER_R_BOTTOM_OHM) / DIVIDER_R_BOTTOM_OHM;
 }
 
