@@ -60,11 +60,16 @@ constexpr uint16_t ADC_SAMPLES = 64;              // averaged per reading
 // ---- Detection and internal resistance ----
 
 // Above this the divider sees a cell; with no cell it reads ~0 V.
-constexpr float CELL_PRESENT_THRESHOLD_V = 0.3f;
+constexpr float CELL_PRESENT_THRESHOLD_V = 0.5f;
 
 // The loaded cell must stay this far above the RL voltage for the MOSFET to
-// regulate. Below it the current is unknown and IR is not reported.
+// regulate. Below it the test stops with a cell-sag fault.
 constexpr float MIN_LOAD_HEADROOM_V = 0.2f;
+
+// Vload above this during the load step is an over-current fault
+// (0.7 V / 10 ohm = 70 mA vs the 50 mA set point).
+constexpr float MAX_LOAD_VOLTAGE_V = 0.7f;
+constexpr uint32_t LOAD_CHECK_INTERVAL_MS = 50;  // fault polling under load
 
 // Holder and wiring resistance in the current path. It is measured along
 // with the cell, so it is subtracted from the computed IR.
@@ -78,8 +83,10 @@ constexpr float IR_WEIGHT = 1.0f;
 // Best match score above this (~4 sigma) is reported as an unknown cell.
 constexpr float MAX_MATCH_SCORE = 16.0f;
 
-// ---- Result display ----
+// ---- LED ----
 constexpr uint32_t RESULT_DISPLAY_MS = 10000;  // result colour on time
+constexpr float STATUS_FLASH_HZ = 3.0f;        // load on / remove cell
+constexpr float FAULT_FLASH_HZ = 5.0f;         // fault
 constexpr uint8_t LED_BRIGHTNESS = 64;         // 0-255, scales all colours
 
 }  // namespace config

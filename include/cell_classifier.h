@@ -16,7 +16,7 @@ struct CellProfile
     float ocvSigmaVolts;   // 1-sigma OCV spread across charge and brands
     float irTypicalOhm;
     float irSpreadFactor;  // 1-sigma IR spread k: 2 means typ/2 .. typ*2
-    Rgb color;             // pastel result colour for the LED
+    Rgb color;             // result colour for the LED
 };
 
 struct Classification

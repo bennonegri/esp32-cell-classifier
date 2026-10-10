@@ -11,10 +11,10 @@ namespace
 // and age, so it has a wide spread.
 const CellProfile kProfiles[] = {
     // name           OCV    sigma  IR      k     colour
-    {"AA Alkaline",   1.50f, 0.12f, 0.150f, 2.0f, {255, 220, 120}},  // yellow
-    {"AA NiMH",       1.32f, 0.08f, 0.040f, 2.0f, {140, 240, 170}},  // mint
-    {"14500 Li-ion",  3.80f, 0.25f, 0.150f, 2.0f, {130, 180, 255}},  // blue
-    {"14500 LiFePO4", 3.28f, 0.08f, 0.080f, 2.0f, {200, 150, 255}},  // lilac
+    {"AA Alkaline",   1.50f, 0.12f, 0.150f, 2.0f, {255, 80, 0}},     // orange
+    {"AA NiMH",       1.32f, 0.08f, 0.040f, 2.0f, {255, 255, 255}},  // white
+    {"14500 Li-ion",  3.80f, 0.25f, 0.150f, 2.0f, {0, 0, 255}},      // blue
+    {"14500 LiFePO4", 3.28f, 0.08f, 0.080f, 2.0f, {160, 0, 255}},    // purple
 };
 
 // Floor for the log IR term; noise can give ~0 or negative IR.
