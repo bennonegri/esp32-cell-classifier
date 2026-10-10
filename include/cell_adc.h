@@ -11,7 +11,7 @@ void begin();
 // Cell terminal voltage in volts, scaled back up through the divider.
 float readCellVolts();
 
-// Voltage across RL in volts, or NAN when LOAD_SENSE_ADC_PIN is not fitted.
-float readLoadSenseVolts();
+// Voltage across RL (Vload) in volts. Load current = Vload / RL.
+float readLoadVolts();
 
 }  // namespace cell_adc

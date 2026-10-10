@@ -7,29 +7,31 @@
 namespace config
 {
 
-// ---- Pins (ESP32-C3) ----
+// ---- Pins and RC filters (ESP32-C3) ----
+// Each analogue line has a first-order RC low-pass, fc = 1 / (2 pi R C).
+//
+// GPIO_1  PWM -> 47k series, 100nF to GND -> op-amp (+) input.
+//         tau 4.7 ms, fc 33.9 Hz. At 20 kHz the ripple is ~4.5 mV p-p at
+//         0.5 V out; a step settles to 0.1% in ~33 ms (7 tau).
+// GPIO_2  Vload (top of RL) -> 4.7k series, 100nF to GND -> ADC.
+//         tau 0.47 ms, fc 339 Hz.
+// GPIO_3  Vcell -> 27k / 39k divider, 100nF from ADC pin to GND.
+//         Filter R is the divider's Thevenin resistance, 27k || 39k = 16k:
+//         tau 1.6 ms, fc 99.8 Hz.
+// All three settle far faster than the 1 s load step.
 
-// On-board WS2812 addressable LED.
-constexpr uint8_t LED_PIN = 8;
-
-// GPIO_1: PWM output. A 47k/100nF RC filter turns it into a DC voltage on
-// the op-amp (+) input, which sets the voltage held across RL.
-constexpr uint8_t LOAD_PWM_PIN = 1;
-
-// GPIO_2: cell voltage through the resistor divider (ADC1 channel 2).
-constexpr uint8_t CELL_ADC_PIN = 2;
-
-// Optional ADC pin wired to the top of RL to measure the real load current.
-// -1 = not fitted; the current is then assumed from LOAD_SET_VOLTAGE_V.
-constexpr int LOAD_SENSE_ADC_PIN = -1;
+constexpr uint8_t LED_PIN = 8;        // on-board WS2812 addressable LED
+constexpr uint8_t LOAD_PWM_PIN = 1;   // GPIO_1: sets voltage across RL
+constexpr uint8_t LOAD_ADC_PIN = 2;   // GPIO_2: Vload (ADC1 channel 2)
+constexpr uint8_t CELL_ADC_PIN = 3;   // GPIO_3: Vcell (ADC1 channel 3)
 
 // ---- Cell voltage divider ----
-// Vcell -> R_TOP -> ADC pin -> R_BOTTOM -> GND.
-// The ESP32-C3 ADC is only calibrated up to ~2.5 V (11 dB attenuation), so
-// keep the pin below that at 4.2 V. 33k/68k gives 2.83 V; 47k/56k gives
-// 2.28 V and is recommended.
-constexpr float DIVIDER_R_TOP_OHM = 33000.0f;
-constexpr float DIVIDER_R_BOTTOM_OHM = 68000.0f;
+// Vcell -> R_TOP -> ADC pin -> R_BOTTOM -> GND. Ratio 39/66 = 0.591.
+// The ESP32-C3 ADC is calibrated to ~2.5 V (11 dB attenuation). 4.2 V gives
+// 2.48 V here: no margin, and resistor tolerance can push it over. 33k top
+// (2.28 V) or 39k top / 27k bottom (1.72 V) would leave headroom.
+constexpr float DIVIDER_R_TOP_OHM = 27000.0f;
+constexpr float DIVIDER_R_BOTTOM_OHM = 39000.0f;
 
 // ---- Electronic load ----
 // The op-amp drives the MOSFET to hold the set voltage across RL, so the
@@ -40,14 +42,14 @@ constexpr float LOAD_SET_VOLTAGE_V = 0.5f;   // voltage across RL under load
 // PWM high level. Measure on the board; it sets the duty-to-volts scale.
 constexpr float GPIO_HIGH_VOLTAGE_V = 3.3f;
 
-// RC corner is 3.4 Hz, so 20 kHz leaves ~5 mV p-p ripple at the op-amp.
+// ~590x above the 33.9 Hz RC corner; see the GPIO_1 filter notes above.
 constexpr uint32_t LOAD_PWM_FREQ_HZ = 20000;
 constexpr uint8_t LOAD_PWM_RESOLUTION_BITS = 10;  // 3.2 mV per step
 constexpr uint8_t LOAD_PWM_CHANNEL = 0;           // LEDC channel
 
 // ---- Measurement timing ----
 constexpr uint32_t CELL_INSERT_SETTLE_MS = 5000;  // contacts + cell settle
-constexpr uint32_t LOAD_OFF_SETTLE_MS = 100;      // RC (tau 4.7 ms) settle
+constexpr uint32_t LOAD_OFF_SETTLE_MS = 100;      // RC filters settle
 constexpr uint32_t LOAD_TIME_MS = 1000;           // load on before reading
 constexpr uint16_t ADC_SAMPLES = 64;              // averaged per reading
 

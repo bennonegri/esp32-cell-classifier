@@ -23,13 +23,10 @@ CellTestResult runCellTest()
     load::setVoltage(config::LOAD_SET_VOLTAGE_V);
     delay(config::LOAD_TIME_MS);
     result.loadedVolts = cell_adc::readCellVolts();
-    const float senseVolts = cell_adc::readLoadSenseVolts();
+    result.loadVolts = cell_adc::readLoadVolts();
     load::off();
 
-    // Use the measured RL voltage if a sense pin is fitted.
-    const float rlVolts =
-        isnan(senseVolts) ? config::LOAD_SET_VOLTAGE_V : senseVolts;
-    result.loadCurrentAmps = rlVolts / config::LOAD_RESISTOR_OHM;
+    result.loadCurrentAmps = result.loadVolts / config::LOAD_RESISTOR_OHM;
 
     // 3. IR = (OCV - V_loaded) / I. Only valid if the cell stayed far enough
     //    above the RL voltage for the MOSFET to hold the set current.

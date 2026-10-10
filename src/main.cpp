@@ -27,8 +27,9 @@ bool cellPresent()
 void printResult(const CellTestResult &test, const Classification &match)
 {
     Serial.printf("OCV:      %.3f V\n", test.ocvVolts);
-    Serial.printf("Loaded:   %.3f V @ %.1f mA\n", test.loadedVolts,
-                  test.loadCurrentAmps * 1000.0f);
+    Serial.printf("Loaded:   %.3f V @ %.1f mA (Vload %.3f V)\n",
+                  test.loadedVolts, test.loadCurrentAmps * 1000.0f,
+                  test.loadVolts);
     if (isnan(test.internalResistanceOhm))
     {
         Serial.println("IR:       n/a (load current not regulated, "

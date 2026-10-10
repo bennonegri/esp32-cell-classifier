@@ -29,12 +29,11 @@ float averageVolts(uint8_t pin)
 void begin()
 {
     // 11 dB attenuation gives the widest input range (~0-2.5 V calibrated).
+    // Vload is normally ~0.5 V, but the wide range lets a fault current
+    // (up to 0.25 A at 10 ohm) still be measured.
     analogReadResolution(12);
     analogSetPinAttenuation(config::CELL_ADC_PIN, ADC_11db);
-    if (config::LOAD_SENSE_ADC_PIN >= 0)
-    {
-        analogSetPinAttenuation(config::LOAD_SENSE_ADC_PIN, ADC_11db);
-    }
+    analogSetPinAttenuation(config::LOAD_ADC_PIN, ADC_11db);
 }
 
 float readCellVolts()
@@ -42,13 +41,9 @@ float readCellVolts()
     return averageVolts(config::CELL_ADC_PIN) * kDividerGain;
 }
 
-float readLoadSenseVolts()
+float readLoadVolts()
 {
-    if (config::LOAD_SENSE_ADC_PIN < 0)
-    {
-        return NAN;
-    }
-    return averageVolts(config::LOAD_SENSE_ADC_PIN);
+    return averageVolts(config::LOAD_ADC_PIN);
 }
 
 }  // namespace cell_adc

@@ -6,7 +6,8 @@ struct CellTestResult
 {
     float ocvVolts;               // open-circuit voltage, load off
     float loadedVolts;            // terminal voltage after LOAD_TIME_MS
-    float loadCurrentAmps;        // set-point or measured load current
+    float loadVolts;              // measured voltage across RL
+    float loadCurrentAmps;        // loadVolts / LOAD_RESISTOR_OHM
     float internalResistanceOhm;  // NAN if load current wasn't regulated
 };
 
