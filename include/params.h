@@ -34,7 +34,7 @@ constexpr uint8_t PWM_CHANNEL = 0;           // LEDC channel
 // ---- Sweep ----
 // Voltages held across RL, each for STEP_HOLD_MS, repeating forever.
 constexpr float SWEEP_VOLTS[] = {0.0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
-constexpr uint32_t STEP_HOLD_MS = 1000;
+constexpr uint32_t STEP_HOLD_MS = 5000;
 
 // ---- Over-current ----
 // Checked every CHECK_INTERVAL_MS. Above the limit the load is turned off
