@@ -125,16 +125,19 @@ CellTestResult runCellTest()
     status_led::flash(status_led::YELLOW, config::STATUS_FLASH_HZ);
     load::setVoltage(setVolts);
     const uint32_t start = millis();
+
     while (result.status == TestStatus::Ok &&
            millis() - start < config::LOAD_TIME_MS)
     {
         status_led::wait(config::LOAD_CHECK_INTERVAL_MS);
         result.status = sampleLoad(result, setVolts);
     }
+
     if (result.status == TestStatus::Ok)
     {
         result.status = sampleLoad(result, setVolts);
     }
+    
     load::off();
 
     // 3. IR = (OCV - V_loaded) / I, only if the load step completed.

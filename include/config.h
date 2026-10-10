@@ -50,8 +50,8 @@ constexpr float LOAD_RESISTOR_OHM = 10.0f;  // RL
 // Load current by chemistry group, chosen from the OCV. Lithium cells have
 // the headroom for more current, which makes the IR voltage drop larger.
 constexpr float LITHIUM_OCV_THRESHOLD_V = 2.5f;  // above: lithium
-constexpr float AA_LOAD_CURRENT_A = 0.05f;       // 0.5 V across 10 ohm
-constexpr float LITHIUM_LOAD_CURRENT_A = 0.10f;  // 1.0 V across 10 ohm
+constexpr float AA_LOAD_CURRENT_A = 0.025f;   
+constexpr float LITHIUM_LOAD_CURRENT_A = 0.05f;
 
 // PWM high level. Measure on the board; it sets the duty-to-volts scale.
 constexpr float GPIO_HIGH_VOLTAGE_V = 3.3f;
