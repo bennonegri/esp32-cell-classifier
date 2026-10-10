@@ -45,13 +45,13 @@ constexpr float ADC_MAX_PIN_V = 2.5f;
 // The op-amp drives the MOSFET to hold I x RL across RL, so the PWM set
 // voltage is the load current x LOAD_RESISTOR_OHM. Keep I x RL below
 // GPIO_HIGH_VOLTAGE_V and well below the ADC_MAX_PIN_V Vload limit.
-constexpr float LOAD_RESISTOR_OHM = 10.0f;  // RL
+constexpr float LOAD_RESISTOR_OHM = 5.0f;  // RL
 
 // Load current by chemistry group, chosen from the OCV. Lithium cells have
 // the headroom for more current, which makes the IR voltage drop larger.
 constexpr float LITHIUM_OCV_THRESHOLD_V = 2.5f;  // above: lithium
-constexpr float AA_LOAD_CURRENT_A = 0.025f;   
-constexpr float LITHIUM_LOAD_CURRENT_A = 0.05f;
+constexpr float AA_LOAD_CURRENT_A = 0.05f;   
+constexpr float LITHIUM_LOAD_CURRENT_A = 0.1f;
 
 // PWM high level. Measure on the board; it sets the duty-to-volts scale.
 constexpr float GPIO_HIGH_VOLTAGE_V = 3.3f;
@@ -103,7 +103,7 @@ constexpr float IR_WEIGHT = 1.0f;
 constexpr float MAX_MATCH_SCORE = 16.0f;
 
 // ---- LED ----
-constexpr uint32_t RESULT_DISPLAY_MS = 10000;  // result colour on time
+constexpr uint32_t RESULT_DISPLAY_MS = 5000;  // result colour on time
 constexpr float STATUS_FLASH_HZ = 3.0f;        // load on / remove cell
 constexpr float FAULT_FLASH_HZ = 5.0f;         // fault
 constexpr uint8_t LED_BRIGHTNESS = 64;         // 0-255, scales all colours
