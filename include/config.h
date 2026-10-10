@@ -37,11 +37,21 @@ constexpr float DIVIDER_R_BOTTOM_OHM = 39000.0f;
 // firmware read 0.53% high, consistent with 1% divider resistor tolerance.
 constexpr float CELL_CAL_GAIN = 0.9947f;
 
+// ADC pin voltages above this (averaged) are outside the calibrated range
+// and end the test with an over-range fault.
+constexpr float ADC_MAX_PIN_V = 2.5f;
+
 // ---- Electronic load ----
-// The op-amp drives the MOSFET to hold the set voltage across RL, so the
-// load current is LOAD_SET_VOLTAGE_V / LOAD_RESISTOR_OHM (0.5/10 = 50 mA).
-constexpr float LOAD_RESISTOR_OHM = 10.0f;   // RL
-constexpr float LOAD_SET_VOLTAGE_V = 0.5f;   // voltage across RL under load
+// The op-amp drives the MOSFET to hold I x RL across RL, so the PWM set
+// voltage is the load current x LOAD_RESISTOR_OHM. Keep I x RL below
+// GPIO_HIGH_VOLTAGE_V and well below the ADC_MAX_PIN_V Vload limit.
+constexpr float LOAD_RESISTOR_OHM = 10.0f;  // RL
+
+// Load current by chemistry group, chosen from the OCV. Lithium cells have
+// the headroom for more current, which makes the IR voltage drop larger.
+constexpr float LITHIUM_OCV_THRESHOLD_V = 2.5f;  // above: lithium
+constexpr float AA_LOAD_CURRENT_A = 0.05f;       // 0.5 V across 10 ohm
+constexpr float LITHIUM_LOAD_CURRENT_A = 0.10f;  // 1.0 V across 10 ohm
 
 // PWM high level. Measure on the board; it sets the duty-to-volts scale.
 constexpr float GPIO_HIGH_VOLTAGE_V = 3.3f;
@@ -51,11 +61,20 @@ constexpr uint32_t LOAD_PWM_FREQ_HZ = 20000;
 constexpr uint8_t LOAD_PWM_RESOLUTION_BITS = 10;  // 3.2 mV per step
 constexpr uint8_t LOAD_PWM_CHANNEL = 0;           // LEDC channel
 
+// ---- OCV settling ----
+// After insertion the cell is sampled every OCV_SAMPLE_INTERVAL_MS. The
+// mean of the newest OCV_STABLE_WINDOW samples is compared with the mean of
+// the window before it (1 s earlier by default). Once the change is within
+// OCV_STABLE_RATE_V_PER_S the newest mean is taken as the OCV. Not settled
+// within OCV_SETTLE_TIMEOUT_MS is a fault.
+constexpr uint32_t OCV_SAMPLE_INTERVAL_MS = 200;
+constexpr uint8_t OCV_STABLE_WINDOW = 5;           // samples per window
+constexpr float OCV_STABLE_RATE_V_PER_S = 0.002f;  // 2 mV/s
+constexpr uint32_t OCV_SETTLE_TIMEOUT_MS = 10000;
+
 // ---- Measurement timing ----
-constexpr uint32_t CELL_INSERT_SETTLE_MS = 5000;  // contacts + cell settle
-constexpr uint32_t LOAD_OFF_SETTLE_MS = 100;      // RC filters settle
-constexpr uint32_t LOAD_TIME_MS = 1000;           // load on before reading
-constexpr uint16_t ADC_SAMPLES = 64;              // averaged per reading
+constexpr uint32_t LOAD_TIME_MS = 1000;  // load on before reading
+constexpr uint16_t ADC_SAMPLES = 64;     // averaged per reading
 
 // ---- Detection and internal resistance ----
 
@@ -66,9 +85,9 @@ constexpr float CELL_PRESENT_THRESHOLD_V = 0.5f;
 // regulate. Below it the test stops with a cell-sag fault.
 constexpr float MIN_LOAD_HEADROOM_V = 0.2f;
 
-// Vload above this during the load step is an over-current fault
-// (0.7 V / 10 ohm = 70 mA vs the 50 mA set point).
-constexpr float MAX_LOAD_VOLTAGE_V = 0.7f;
+// Measured current above set current x this is an over-current fault
+// (1.4 x 50 mA = 70 mA, i.e. Vload > 0.7 V for AA cells at 10 ohm).
+constexpr float OVER_CURRENT_RATIO = 1.4f;
 constexpr uint32_t LOAD_CHECK_INTERVAL_MS = 50;  // fault polling under load
 
 // Holder and wiring resistance in the current path. It is measured along

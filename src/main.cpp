@@ -3,11 +3,13 @@
 // Waits for a cell, measures its open-circuit voltage and internal
 // resistance, classifies the chemistry and shows the state on the LED:
 //   green  solid        ready, insert a cell
-//   yellow solid        cell detected: settling and measuring OCV
+//   yellow solid        cell detected: waiting for a stable OCV
 //   yellow flash 3 Hz   load on, measuring IR
 //   result solid        chemistry for RESULT_DISPLAY_MS (see classifier),
 //                       or red if no chemistry matched
-//   red    flash 5 Hz   fault: cell sagged or over-current; until removed
+//   red    flash 5 Hz   fault, load off, until the cell is removed: OCV
+//                       did not settle, ADC over range, cell sagged or
+//                       over-current
 //   green  flash 3 Hz   remove the cell to test another
 #include <Arduino.h>
 
@@ -38,10 +40,38 @@ void waitForRemoval()
 
 void printMeasurements(const CellTestResult &test)
 {
-    Serial.printf("OCV:      %.3f V\n", test.ocvVolts);
-    Serial.printf("Loaded:   %.3f V @ %.1f mA (Vload %.3f V)\n",
-                  test.loadedVolts, test.loadCurrentAmps * 1000.0f,
-                  test.loadVolts);
+    const float settleS = test.settleMs / 1000.0f;
+    if (test.status == TestStatus::OcvNotSettled)
+    {
+        Serial.printf("OCV:      %.3f V (not settled after %.1f s)\n",
+                      test.ocvVolts, settleS);
+    }
+    else if (test.setCurrentAmps == 0.0f)
+    {
+        // Faulted before the OCV settled; show the last reading.
+        Serial.printf("Vcell:    %.3f V\n", test.ocvVolts);
+    }
+    else
+    {
+        Serial.printf("OCV:      %.3f V (settled in %.1f s)\n",
+                      test.ocvVolts, settleS);
+    }
+    if (test.setCurrentAmps > 0.0f)
+    {
+        Serial.printf("Loaded:   %.3f V @ %.1f mA, set %.1f mA "
+                      "(Vload %.3f V)\n",
+                      test.loadedVolts, test.loadCurrentAmps * 1000.0f,
+                      test.setCurrentAmps * 1000.0f, test.loadVolts);
+    }
+}
+
+// Load off and flash red until the cell is removed.
+void faultState(TestStatus status)
+{
+    load::off();
+    Serial.printf("FAULT:    %s. Remove the cell.\n", statusName(status));
+    status_led::flash(status_led::RED, config::FAULT_FLASH_HZ);
+    waitForRemoval();
 }
 }  // namespace
 
@@ -64,13 +94,11 @@ void loop()
         return;
     }
 
-    // Let the contacts and cell voltage settle after insertion.
-    Serial.println("Cell detected, settling...");
+    Serial.println("Cell detected, waiting for a stable OCV...");
     status_led::show(status_led::YELLOW);
-    status_led::wait(config::CELL_INSERT_SETTLE_MS);
 
     const CellTestResult test = runCellTest();
-    if (!cellPresent())
+    if (test.status == TestStatus::CellRemoved || !cellPresent())
     {
         Serial.println("Cell removed during test");
         return;
@@ -78,12 +106,9 @@ void loop()
 
     printMeasurements(test);
 
-    if (test.fault != CellFault::None)
+    if (isFault(test.status))
     {
-        Serial.printf("FAULT:    %s. Remove the cell.\n",
-                      faultName(test.fault));
-        status_led::flash(status_led::RED, config::FAULT_FLASH_HZ);
-        waitForRemoval();
+        faultState(test.status);
         return;
     }
 

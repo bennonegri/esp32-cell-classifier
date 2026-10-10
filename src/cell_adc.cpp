@@ -15,8 +15,10 @@ constexpr float kDividerGain =
     (config::DIVIDER_R_TOP_OHM + config::DIVIDER_R_BOTTOM_OHM) /
     config::DIVIDER_R_BOTTOM_OHM;
 
+bool overRangeSeen = false;
+
 // Mean pin voltage in volts. analogReadMilliVolts applies the factory
-// eFuse calibration, so no manual offset/gain correction is needed.
+// eFuse calibration. Flags readings above the calibrated range.
 float averageVolts(uint8_t pin)
 {
     uint32_t sumMilliVolts = 0;
@@ -24,14 +26,19 @@ float averageVolts(uint8_t pin)
     {
         sumMilliVolts += analogReadMilliVolts(pin);
     }
-    return sumMilliVolts / (config::ADC_SAMPLES * 1000.0f);
+    const float volts = sumMilliVolts / (config::ADC_SAMPLES * 1000.0f);
+    if (volts > config::ADC_MAX_PIN_V)
+    {
+        overRangeSeen = true;
+    }
+    return volts;
 }
 }  // namespace
 
 void begin()
 {
     // 11 dB attenuation gives the widest input range (~0-2.5 V calibrated).
-    // Vload is normally ~0.5 V, but the wide range lets a fault current
+    // Vload is normally 0.5-1 V, but the wide range lets a fault current
     // (up to 0.25 A at 10 ohm) still be measured.
     analogReadResolution(12);
     analogSetPinAttenuation(config::CELL_ADC_PIN, ADC_11db);
@@ -46,6 +53,16 @@ float readCellVolts()
 float readLoadVolts()
 {
     return averageVolts(config::LOAD_ADC_PIN);
+}
+
+bool overRange()
+{
+    return overRangeSeen;
+}
+
+void clearOverRange()
+{
+    overRangeSeen = false;
 }
 
 }  // namespace cell_adc

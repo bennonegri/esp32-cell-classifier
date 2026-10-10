@@ -14,4 +14,9 @@ float readCellVolts();
 // Voltage across RL (Vload) in volts. Load current = Vload / RL.
 float readLoadVolts();
 
+// True if any reading since clearOverRange() had an ADC pin voltage above
+// ADC_MAX_PIN_V, i.e. outside the calibrated range.
+bool overRange();
+void clearOverRange();
+
 }  // namespace cell_adc
